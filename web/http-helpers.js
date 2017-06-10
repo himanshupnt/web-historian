@@ -1,5 +1,7 @@
 var path = require('path');
+var url = require('url');
 var fs = require('fs');
+
 var archive = require('../helpers/archive-helpers');
 
 exports.headers = {
@@ -10,12 +12,35 @@ exports.headers = {
   'Content-Type': 'text/html'
 };
 
-exports.serveAssets = function(res, asset, callback) {
-  // Write some code here that helps serve up your static files!
-  // (Static files are things like html (yours or archived from others...),
-  // css, or anything that doesn't change often.)
+exports.assetGen = function (req) {
+  var asset;
+
+  var parsedUrl = url.parse(req.url);
+  var pathName = parsedUrl.pathname;
+
+  if (pathName === '/') {
+    asset = fs.readFileSync(archive.paths.siteAssets + '/index.html');
+  } else {
+    asset = fs.readFileSync(archive.paths.archivedSites + pathName);
+  }
+
+  return asset;
 };
 
+exports.sendResponse = function (response,asset,statusCode) {
+  statusCode = statusCode || 200;
+  response.writeHead(statusCode, exports.headers);
+  response.end(asset)
+};
+
+var options = {
+  'GET' : function () {
+
+  }
+}
 
 
-// As you progress, keep thinking about what helper functions you can put here!
+exports.serveAssets = function(res, asset, callback, statusCode) {
+  callback(res,asset,statusCode);
+};
+
