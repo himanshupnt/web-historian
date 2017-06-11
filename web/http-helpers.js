@@ -23,7 +23,7 @@ var urlParser = function (req) {
   parsed.pathName = parsed.parsedUrl.pathname;
   parsed.ext = path.parse(parsed.pathName).ext;
   return parsed;
-}
+};
 
 exports.assetGen = function (req) {
   var asset;
@@ -47,10 +47,10 @@ exports.assetGen = function (req) {
   return asset;
 };
 
-exports.sendResponseOnGet = function (req,response,asset,statusCode) {
+exports.sendResponseOnGet = function (req, response, asset, statusCode) {
   var ext = urlParser(req).ext;
 
-  if(asset === null) {
+  if (asset === null) {
     statusCode = 404;
   } else {
     statusCode = statusCode || 200;
@@ -77,10 +77,10 @@ exports.sendResponseOnPost = function (req, response, callback) {
     response.writeHead(302, exports.headers);
     var requestedUrl = body.split('url=')[1];
 
-    archive.readListOfUrls(function(data) {
+    // archive.readListOfUrls(function(data) {
 
-      // console.log(data);
-    });
+    //   // console.log(data);
+    // });
 
     fs.appendFile(archive.paths.list, requestedUrl + '\n', function(err) {
       if(err) {
@@ -89,20 +89,8 @@ exports.sendResponseOnPost = function (req, response, callback) {
     });
 
     response.end(postAsset);
-  })
-
-  // console.log(`THIS IS XXXXXXXX ${reqPath} XXXXXXXX`);
-  // exports.headers['Content-Type'] = mimeType[ext];
-  // response.writeHead(201, exports.headers);
-  // fs.appendFile(archive.paths.list + '')
-  // response.end(postAsset);
-  // request.on('end', function(){
-  //   // console.log('Starting body');
-  //   // console.log(body);
-  //   // console.log('done body');
-  //   callback( JSON.parse(body) );
-  // })
-}
+  });
+};
 
 
 

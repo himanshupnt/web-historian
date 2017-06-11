@@ -9,5 +9,5 @@ exports.fetch = function (url) {
   var formatUrl = 'http://' + url;
   request(formatUrl, function (err, response, body) {
     return body;
-  })
-}
+  });
+};
