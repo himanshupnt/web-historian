@@ -65,14 +65,16 @@ exports.isUrlArchived = function(url, callback) {
 
 exports.downloadUrls = function(urls) {
   urls.forEach(function(url) {
-    var html = fetchHtml.fetch(url);
+  fetchHtml.fetch(url, function (body) {
+    var html = body;
     var path = exports.paths.archivedSites + '/' + url;
-    fs.writeFile(path, html, function(err) {
+    fs.writeFile(path, html, 'utf8', function(err) {
       if (err) {
         throw new Error(err);
       } else {
         console.log('The file has been saved!');
       }
     });
+  });
   });
 };

@@ -65,30 +65,49 @@ exports.sendResponseOnGet = function (req, response, asset, statusCode) {
 
 exports.sendResponseOnPost = function (req, response, callback) {
   // var ext = urlParser(req).ext;
-  var postAsset = fs.readFileSync(archive.paths.siteAssets + '/loading.html');
+  var postAsset; //= fs.readFileSync(archive.paths.siteAssets + '/loading.html');
   var reqPath = req;
+  var reqUrl;
+  // var ext = urlParser(req).ext;
   var body = '';
+
   req.on('data', function(chunk) {
     body += chunk;
+    reqUrl = body.split('url=')[1];
   });
+
   req.on('end', function () {
-    var ext = urlParser(req).ext;
-    exports.headers['Content-Type'] = mimeType[ext];
+    exports.headers['Content-Type'] = mimeType['.html'];
     response.writeHead(302, exports.headers);
-    var requestedUrl = body.split('url=')[1];
+
+    archive.isUrlArchived (reqUrl, function(isTrue) {
+      if (isTrue) {
+        postAsset = fs.readFileSync(archive.paths.archivedSites + '/' + reqUrl);
+
+        // archive.addUrlToList(reqUrl, function() {
+        //   archive.downloadUrls([reqUrl]);
+        // });
+        response.end(postAsset);
+      } else {
+        postAsset = fs.readFileSync(archive.paths.siteAssets + '/loading.html');
+        archive.addUrlToList(reqUrl, function() {
+          archive.downloadUrls([reqUrl]);
+        });
+        response.end(postAsset);
+      }
+    })
 
     // archive.readListOfUrls(function(data) {
 
     //   // console.log(data);
     // });
 
-    fs.appendFile(archive.paths.list, requestedUrl + '\n', function(err) {
-      if(err) {
-        console.log('Error in appending: ', err);
-      }
-    });
+    // fs.appendFile(archive.paths.list, reqUrl + '\n', function(err) {
+    //   if(err) {
+    //     console.log('Error in appending: ', err);
+    //   }
+    // });
 
-    response.end(postAsset);
   });
 };
 
