@@ -8,6 +8,8 @@ var httpHelper = require('./http-helpers');
 exports.handleRequest = function (req, res) {
   if (req.method === 'GET') {
     var asset = httpHelper.assetGen(req);
-    httpHelper.serveAssets(res, asset, httpHelper.sendResponse);
+    httpHelper.serveAssets(req, res, asset, httpHelper.sendResponseOnGet);
+  } else if (req.method === 'POST') {
+    httpHelper.sendResponseOnPost(req, res);
   }
 };

@@ -12,35 +12,101 @@ exports.headers = {
   'Content-Type': 'text/html'
 };
 
+var mimeType = {
+  '.css': 'text/css',
+  '.html': 'text/html'
+};
+
+var urlParser = function (req) {
+  var parsed = {};
+  parsed.parsedUrl = url.parse(req.url);
+  parsed.pathName = parsed.parsedUrl.pathname;
+  parsed.ext = path.parse(parsed.pathName).ext;
+  return parsed;
+}
+
 exports.assetGen = function (req) {
   var asset;
-
-  var parsedUrl = url.parse(req.url);
-  var pathName = parsedUrl.pathname;
+  var pathName = urlParser(req).pathName;
 
   if (pathName === '/') {
     asset = fs.readFileSync(archive.paths.siteAssets + '/index.html');
+  } else if (pathName === '/styles.css') {
+    asset = fs.readFileSync(archive.paths.siteAssets + pathName);
   } else {
-    asset = fs.readFileSync(archive.paths.archivedSites + pathName);
+    try {
+      asset = fs.readFileSync(archive.paths.archivedSites + pathName);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        asset = null;
+        console.log(`${pathName} not found`);
+      }
+    }
   }
 
   return asset;
 };
 
-exports.sendResponse = function (response,asset,statusCode) {
-  statusCode = statusCode || 200;
+exports.sendResponseOnGet = function (req,response,asset,statusCode) {
+  var ext = urlParser(req).ext;
+
+  if(asset === null) {
+    statusCode = 404;
+  } else {
+    statusCode = statusCode || 200;
+  }
+
+  exports.headers['Content-Type'] = mimeType[ext];
   response.writeHead(statusCode, exports.headers);
-  response.end(asset)
+  asset === null ? response.end('404 not found') : response.end(asset);
 };
 
-var options = {
-  'GET' : function () {
 
-  }
+
+exports.sendResponseOnPost = function (req, response, callback) {
+  // var ext = urlParser(req).ext;
+  var postAsset = fs.readFileSync(archive.paths.siteAssets + '/loading.html');
+  var reqPath = req;
+  var body = '';
+  req.on('data', function(chunk) {
+    body += chunk;
+  });
+  req.on('end', function () {
+    var ext = urlParser(req).ext;
+    exports.headers['Content-Type'] = mimeType[ext];
+    response.writeHead(302, exports.headers);
+    var requestedUrl = body.split('url=')[1];
+
+    archive.readListOfUrls(function(data) {
+
+      // console.log(data);
+    });
+
+    fs.appendFile(archive.paths.list, requestedUrl + '\n', function(err) {
+      if(err) {
+        console.log('Error in appending: ', err);
+      }
+    });
+
+    response.end(postAsset);
+  })
+
+  // console.log(`THIS IS XXXXXXXX ${reqPath} XXXXXXXX`);
+  // exports.headers['Content-Type'] = mimeType[ext];
+  // response.writeHead(201, exports.headers);
+  // fs.appendFile(archive.paths.list + '')
+  // response.end(postAsset);
+  // request.on('end', function(){
+  //   // console.log('Starting body');
+  //   // console.log(body);
+  //   // console.log('done body');
+  //   callback( JSON.parse(body) );
+  // })
 }
 
 
-exports.serveAssets = function(res, asset, callback, statusCode) {
-  callback(res,asset,statusCode);
+
+exports.serveAssets = function(req, res, asset, callback, statusCode) {
+  callback(req,res,asset,statusCode);
 };
 
